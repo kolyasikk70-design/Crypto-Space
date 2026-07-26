@@ -1,0 +1,30 @@
+# Environment variables (contains secret keys/tokens)
+.env
+*.env
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+
+# Python cache & virtual environments
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+ENV/
+env/
+
+# Logs & executables
+*.log
+*.exe
+install.log
+python-installer.exe
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
