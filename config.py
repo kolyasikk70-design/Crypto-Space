@@ -11,14 +11,14 @@ DRY_RUN: bool = os.getenv("DRY_RUN", "true").lower() in ("true", "1", "yes")
 
 # LLM Provider Configuration
 LLM_API_KEY: str = os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("GEMINI_API_KEY") or ""
-LLM_MODEL: str = os.getenv("LLM_MODEL", "openrouter/free")
+LLM_MODEL: str = os.getenv("LLM_MODEL", "meta-llama/llama-3.3-70b-instruct")
 LLM_BASE_URL: str = os.getenv("LLM_BASE_URL", "https://openrouter.ai/api/v1")
 
 FREE_MODELS: list = [
-    "openrouter/free",
-    "google/gemma-4-31b-it:free",
-    "google/gemma-4-26b-a4b-it:free",
-    "nvidia/nemotron-3-super-120b-a12b:free"
+    "meta-llama/llama-3.3-70b-instruct",
+    "openrouter/auto",
+    "meta-llama/llama-3.1-8b-instruct",
+    "qwen/qwen-2.5-72b-instruct"
 ]
 
 # Quality Control Threshold

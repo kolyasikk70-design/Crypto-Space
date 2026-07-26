@@ -82,9 +82,29 @@ class EditorialWriter:
         summary = news_item.get("summary", "")
 
         ru_title = self._translate_to_russian(title)
-        ru_summary = self._translate_to_russian(summary[:450]) if summary else ru_title
+        ru_summary = self._translate_to_russian(summary) if summary else ru_title
 
-        full_content = f"**{ru_title}**\n\n{ru_summary}"
+        category_hashtags = {
+            "Macro & Regulation": "#Макро",
+            "On-Chain & Whales": "#Ончейн",
+            "Security Alert": "#Безопасность",
+            "Tokenomics & VC": "#Ретродроп",
+            "Infrastructure": "#Инфраструктура",
+            "General Crypto": "#Аналитика"
+        }
+        tag = category_hashtags.get(category, "#Аналитика")
+
+        full_content = (
+            f"{tag} **{ru_title}**\n\n"
+            f"⚡ **Главные детали события:**\n"
+            f"{ru_summary}\n\n"
+            f"📊 **Аналитика и рыночный контекст:**\n"
+            f"События вокруг {ru_title[:45]} демонстрируют фундаментальные изменения в секторе {category}. "
+            f"Институциональные участники и аналитики фиксируют повышенное внимание к этому тренду, что напрямую сказывается на распределении ликвидности.\n\n"
+            f"💡 **Ключевой вывод:**\n"
+            f"Для участников рынка это важный ориентир. Следим за движением Smart Money и продолжением импульса."
+        )
+
         full_content, refs = self._inject_referrals(full_content)
 
         return {
@@ -138,10 +158,7 @@ class EditorialWriter:
                 payload = {
                     "model": model,
                     "messages": messages,
-                    "temperature": temperature,
-                    "provider": {
-                        "allow_fallbacks": False
-                    }
+                    "temperature": temperature
                 }
                 response = await client.post(
                     f"{config.LLM_BASE_URL.rstrip('/')}/chat/completions",

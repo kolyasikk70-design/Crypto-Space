@@ -19,6 +19,10 @@ class FilterVerifier:
         summary = news_item.get("summary", "")
         text = f"{title} {summary}".lower()
 
+        # Reject raw price dumps or ticker snapshots
+        if "рыночный импульс" in text or "coingecko" in text or "текущие реальные котировки" in text or "simple/price" in text:
+            return False, 0.0, "Filtered out: raw price ticker update"
+
         # Check for spam or low value price prediction
         for spam_term in self.spam_keywords:
             if spam_term in text:

@@ -21,11 +21,27 @@ async def generate_and_publish_real_news():
     evaluator = QualityEvaluator()
     publisher = TelegramPublisher(dry_run=False)
 
-    print("🔎 Fetching REAL fresh news from CoinDesk, Decrypt, Cointelegraph, CryptoSlate...")
+    print("🔎 Fetching REAL fresh news from RSS feeds and DB...")
     rss_items = await rss.fetch_all()
     api_items = await api.fetch_all()
 
-    all_items = rss_items + api_items
+    unprocessed_db = db.get_unprocessed_news(limit=20)
+
+    # Fallback to raw_news table if all entries are already seen
+    if not rss_items and not unprocessed_db:
+        with db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT source_name, source_url, title, summary FROM news_raw ORDER BY id DESC LIMIT 15")
+            rows = cursor.fetchall()
+            for r in rows:
+                rss_items.append({
+                    "source_name": r[0],
+                    "source_url": r[1],
+                    "title": r[2],
+                    "summary": r[3]
+                })
+
+    all_items = rss_items + api_items + unprocessed_db
     
     selected_item = None
     selected_category = "General Crypto"
@@ -42,7 +58,7 @@ async def generate_and_publish_real_news():
         selected_item = all_items[0]
 
     if not selected_item:
-        print("❌ No items fetched from feeds.")
+        print("❌ No items fetched from feeds or DB.")
         return
 
     print(f"\n📌 REAL SOURCE: [{selected_item.get('source_name')}] {selected_item.get('source_url')}")
