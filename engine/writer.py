@@ -68,13 +68,22 @@ class EditorialWriter:
                 used_links.append(f"[{brand}]({url})")
         return content, used_links
 
+    def _clean_ru_title(self, raw_title: str) -> str:
+        if not raw_title:
+            return ""
+        # Remove prefixed "Twitter (@handle): " or "Твиттер (@handle): "
+        cleaned = re.sub(r'^(?:Twitter|Твиттер)\s*(?:\([^)]+\))?:\s*', '', raw_title, flags=re.IGNORECASE).strip()
+        if not self._is_russian(cleaned):
+            cleaned = self._translate_to_russian(cleaned)
+        return cleaned.strip()
+
     def _fallback_generate(self, news_item: Dict[str, Any], category: str) -> Dict[str, Any]:
         title = news_item.get("title", "")
         summary = news_item.get("summary", "")
         source_name = news_item.get("source_name", "Источник")
         source_url = news_item.get("source_url", "")
 
-        ru_title = self._translate_to_russian(title)
+        ru_title = self._clean_ru_title(title)
         ru_summary = self._translate_to_russian(summary) if summary else ru_title
 
         is_twitter = "twitter" in source_name.lower()
@@ -235,11 +244,8 @@ class EditorialWriter:
                 content = parsed.get("content", "")
                 content = self._purge_template_headers(content)
 
-                if not self._is_russian(content):
-                    print(f"[Writer] ⚠️ Перевод ответа модели на русский...")
-                    content = self._translate_to_russian(content)
-                    title = self._translate_to_russian(parsed.get("title", ""))
-                    parsed["title"] = title
+                title = self._clean_ru_title(parsed.get("title", title))
+                parsed["title"] = title
 
                 content, refs = self._inject_referrals(content)
                 
