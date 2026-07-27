@@ -126,11 +126,39 @@ class CryptoNewsroomEngine:
             correct_option_id=poll.get("correct_option_id"),
             explanation=poll.get("explanation")
         )
-        print(f"✅ Published interactive Poll/Quiz #{msg_id}!")
+        if msg_id:
+            self.db.record_published_post(
+                title=poll["question"],
+                content=json.dumps(poll["options"], ensure_ascii=False),
+                post_type="poll",
+                category="Interactive",
+                quality_score=10.0,
+                quality_breakdown={},
+                source_url="",
+                referral_links=[],
+                telegram_message_id=msg_id
+            )
+            print(f"✅ Published interactive Poll/Quiz #{msg_id}!")
+
+    async def check_and_publish_daily_poll(self):
+        """Automatically publish 1 interactive poll/quiz every 24 hours"""
+        with self.db.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT published_at FROM posts WHERE post_type = 'poll' ORDER BY published_at DESC LIMIT 1")
+            row = cursor.fetchone()
+            if not row or (time.time() - row[0]) >= 86400:
+                print("📊 [DAILY POLL] Publishing daily interactive poll/quiz...")
+                await self.publish_interactive_poll()
 
     async def run_cycle(self):
         print("\n🔍 [DISCOVERY] Fetching crypto news, metric updates, and Twitter influencer posts...")
         
+        # Check daily interactive poll
+        try:
+            await self.check_and_publish_daily_poll()
+        except Exception as e:
+            print(f"⚠️ Error checking daily poll: {e}")
+
         # Gather news items
         rss_news = await self.rss_collector.fetch_all()
         api_events = await self.api_collector.fetch_all()
