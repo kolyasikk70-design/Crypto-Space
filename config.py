@@ -61,3 +61,28 @@ HIGH_IMPACT_KEYWORDS: List[str] = [
     "treasury", "liquidation", "bankruptcy", "binance", "coinbase", "tether", "usdt",
     "usdc", "ethereum", "solana", "bitcoin", "layerzero", "eigenlayer", "monad", "berachain"
 ]
+
+# Top 20 Crypto Influencers & Key Accounts for Twitter Monitoring
+TWITTER_INFLUENCERS: List[Dict[str, str]] = [
+    {"handle": "VitalikButerin", "name": "Vitalik Buterin", "category": "Founder"},
+    {"handle": "cz_binance", "name": "Changpeng Zhao (CZ)", "category": "Founder"},
+    {"handle": "brian_armstrong", "name": "Brian Armstrong", "category": "Founder"},
+    {"handle": "aeyakovenko", "name": "Anatoly Yakovenko", "category": "Founder"},
+    {"handle": "CryptoHayes", "name": "Arthur Hayes", "category": "Strategist"},
+    {"handle": "paoloardoino", "name": "Paolo Ardoino", "category": "Executive"},
+    {"handle": "el33th4xor", "name": "Emin Gün Sirer", "category": "Founder"},
+    {"handle": "StaniKulechov", "name": "Stani Kulechov", "category": "Founder"},
+    {"handle": "haydenzadams", "name": "Hayden Adams", "category": "Founder"},
+    {"handle": "sandeepnailwal", "name": "Sandeep Nailwal", "category": "Founder"},
+    {"handle": "zachxbt", "name": "ZachXBT", "category": "Security"},
+    {"handle": "lookonchain", "name": "Lookonchain", "category": "Onchain"},
+    {"handle": "PeckShieldAlert", "name": "PeckShield", "category": "Security"},
+    {"handle": "whale_alert", "name": "Whale Alert", "category": "Onchain"},
+    {"handle": "tier10k", "name": "Tier10k / DB", "category": "News"},
+    {"handle": "saylor", "name": "Michael Saylor", "category": "Executive"},
+    {"handle": "cobie", "name": "Cobie", "category": "Trader"},
+    {"handle": "100trillionUSD", "name": "PlanB", "category": "Analyst"},
+    {"handle": "milesdeutscher", "name": "Miles Deutscher", "category": "Analyst"},
+    {"handle": "0xMert_", "name": "Mert Mumtaz", "category": "Founder"}
+]
+

@@ -11,6 +11,7 @@ if sys.platform == "win32":
 from database import Database
 from collectors.rss_collector import RSSCollector
 from collectors.api_collector import APICollector
+from collectors.twitter_collector import TwitterCollector
 from engine.filter_verifier import FilterVerifier
 from engine.deduplicator import Deduplicator
 from engine.writer import EditorialWriter
@@ -25,6 +26,7 @@ class CryptoNewsroomEngine:
         self.db = Database()
         self.rss_collector = RSSCollector(self.db)
         self.api_collector = APICollector(self.db)
+        self.twitter_collector = TwitterCollector(self.db)
         self.filter_verifier = FilterVerifier()
         self.deduplicator = Deduplicator(self.db)
         self.writer = EditorialWriter()
@@ -32,6 +34,7 @@ class CryptoNewsroomEngine:
         self.digest_generator = DigestGenerator(self.db)
         self.poll_generator = PollGenerator()
         self.publisher = TelegramPublisher()
+
 
     def _can_publish_now(self) -> bool:
         """Check if enough time (at least 3.5 hours) has elapsed since the last Telegram post"""
@@ -126,14 +129,15 @@ class CryptoNewsroomEngine:
         print(f"✅ Published interactive Poll/Quiz #{msg_id}!")
 
     async def run_cycle(self):
-        print("\n🔍 [DISCOVERY] Fetching crypto news and metric updates...")
+        print("\n🔍 [DISCOVERY] Fetching crypto news, metric updates, and Twitter influencer posts...")
         
         # Gather news items
         rss_news = await self.rss_collector.fetch_all()
         api_events = await self.api_collector.fetch_all()
+        twitter_tweets = await self.twitter_collector.fetch_all()
 
         unprocessed = self.db.get_unprocessed_news(limit=15)
-        print(f"📥 Received {len(rss_news)} RSS stories, {len(api_events)} API events. {len(unprocessed)} unprocessed in DB.")
+        print(f"📥 Received {len(rss_news)} RSS stories, {len(api_events)} API events, {len(twitter_tweets)} Twitter posts. {len(unprocessed)} unprocessed in DB.")
 
         if not self._can_publish_now():
             for item in unprocessed:

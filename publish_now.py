@@ -8,6 +8,7 @@ if sys.platform == "win32":
 from database import Database
 from collectors.rss_collector import RSSCollector
 from collectors.api_collector import APICollector
+from collectors.twitter_collector import TwitterCollector
 from engine.filter_verifier import FilterVerifier
 from engine.writer import EditorialWriter
 from engine.quality_evaluator import QualityEvaluator
@@ -17,18 +18,20 @@ async def generate_and_publish_real_news():
     db = Database()
     rss = RSSCollector(db)
     api = APICollector(db)
+    twitter = TwitterCollector(db)
     writer = EditorialWriter()
     evaluator = QualityEvaluator()
     publisher = TelegramPublisher(dry_run=False)
 
-    print("🔎 Fetching REAL fresh news from RSS feeds and DB...")
+    print("🔎 Fetching REAL fresh news from RSS feeds, Twitter, and DB...")
     rss_items = await rss.fetch_all()
     api_items = await api.fetch_all()
+    twitter_items = await twitter.fetch_all()
 
     unprocessed_db = db.get_unprocessed_news(limit=20)
 
     # Fallback to raw_news table if all entries are already seen
-    if not rss_items and not unprocessed_db:
+    if not rss_items and not twitter_items and not unprocessed_db:
         with db.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT source_name, source_url, title, summary FROM news_raw ORDER BY id DESC LIMIT 15")
@@ -41,7 +44,7 @@ async def generate_and_publish_real_news():
                     "summary": r[3]
                 })
 
-    all_items = rss_items + api_items + unprocessed_db
+    all_items = twitter_items + rss_items + api_items + unprocessed_db
     
     selected_item = None
     selected_category = "General Crypto"
