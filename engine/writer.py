@@ -251,8 +251,22 @@ class EditorialWriter:
                     "General Crypto": "#Разбор"
                 }
                 hashtag = category_hashtags.get(category, "#Инсайд" if "Twitter" in source else "#Разбор")
-                if not content.startswith("#"):
-                    content = f"{hashtag} {content}"
+                
+                # Programmatically guarantee hyperlinked source in 1 word/phrase if missing
+                if source_url and f"[{source}]" not in content and source_url not in content:
+                    hyperlink = f"[{source}](<{source_url}>)"
+                    if content.startswith("#"):
+                        # Insert right after hashtag header
+                        lines = content.split("\n\n")
+                        lines.insert(1, f"По материалам {hyperlink}:")
+                        content = "\n\n".join(lines)
+                    else:
+                        content = f"📌 {hashtag} **{title}**\n\nПо материалам {hyperlink}:\n\n{content}"
+                elif not content.startswith("📌") and not content.startswith("#"):
+                    content = f"📌 {hashtag} **{title}**\n\n{content}"
+
+                # Clean any raw un-hyperlinked bare URLs taking up space in body text
+                content = re.sub(r'(?<!\()https?://\S+(?!\))', '', content).strip()
 
                 parsed["content"] = content
                 parsed["referral_links_used"] = refs
