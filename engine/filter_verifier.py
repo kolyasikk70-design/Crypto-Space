@@ -30,10 +30,14 @@ class FilterVerifier:
 
         # Check high impact keyword match
         matches = self.high_impact_regex.findall(text)
-        confidence = 0.5  # Base confidence
+        confidence = 0.55  # Base confidence
 
         if matches:
-            confidence += 0.35
+            confidence += 0.30
+
+        # Prioritize Twitter influencer posts
+        if "twitter" in news_item.get("source_name", "").lower():
+            confidence += 0.25
 
         # Check title indicators (numbers, dollar amounts, official names)
         if re.search(r'\$\d+|\d+\s*million|\d+\s*billion|\bsec\b|\betf\b|\bhack\b|\bexploit\b|\bairdrop\b', text):
