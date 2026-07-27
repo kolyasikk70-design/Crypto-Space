@@ -11,14 +11,15 @@ DRY_RUN: bool = os.getenv("DRY_RUN", "true").lower() in ("true", "1", "yes")
 
 # LLM Provider Configuration
 LLM_API_KEY: str = os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("GEMINI_API_KEY") or ""
-LLM_MODEL: str = os.getenv("LLM_MODEL", "meta-llama/llama-3.3-70b-instruct")
+LLM_MODEL: str = os.getenv("LLM_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
 LLM_BASE_URL: str = os.getenv("LLM_BASE_URL", "https://openrouter.ai/api/v1")
 
 FREE_MODELS: list = [
-    "meta-llama/llama-3.3-70b-instruct",
-    "openrouter/auto",
-    "meta-llama/llama-3.1-8b-instruct",
-    "qwen/qwen-2.5-72b-instruct"
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "qwen/qwen-2.5-72b-instruct:free",
+    "google/gemini-2.0-flash-exp:free",
+    "deepseek/deepseek-r1:free",
+    "meta-llama/llama-3.1-8b-instruct:free"
 ]
 
 # Quality Control Threshold
