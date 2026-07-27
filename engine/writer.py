@@ -75,14 +75,14 @@ class EditorialWriter:
         ru_summary = self._translate_to_russian(summary) if summary else ru_title
 
         is_twitter = "twitter" in source_name.lower()
-        tag = "#Инсайд" if is_twitter else "#Аналитика"
+        tag = "📌 #Инсайд" if is_twitter else "📌 #Аналитика"
         author_text = f"[{source_name}]({source_url})" if source_url else source_name
 
         full_content = (
             f"{tag} **{ru_title}**\n\n"
             f"По материалам {author_text}:\n\n"
             f"{ru_summary}\n\n"
-            f"💡 Данное событие отражает смещение ликвидности и внимания ключевых участников рынка."
+            f"💡 Данное событие отражает фундаментальный сдвиг ликвидности и внимания ключевых участников рынка."
         )
 
         full_content, refs = self._inject_referrals(full_content)
