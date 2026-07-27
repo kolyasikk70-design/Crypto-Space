@@ -54,12 +54,16 @@ class TwitterCollector:
                         tweet_url = f"https://x.com/{screen_name}/status/{tweet_id}"
                         source_title = f"Twitter (@{screen_name}): {text[:80]}..." if len(text) > 80 else f"Twitter (@{screen_name}): {text}"
 
-                        # Extract media image if available
+                        # Extract media image or author profile avatar card
                         image_url = ""
                         entities = tweet.get("entities", {})
                         media_list = entities.get("media", [])
                         if media_list and isinstance(media_list, list):
                             image_url = media_list[0].get("media_url_https", "")
+                        
+                        # Fallback to high-res profile avatar image card if no media photo attached
+                        if not image_url and user_info.get("profile_image_url_https"):
+                            image_url = user_info.get("profile_image_url_https", "").replace("_normal", "_400x400")
 
                         # Check DB duplicate
                         if not self.db.is_news_seen(tweet_url, source_title):
