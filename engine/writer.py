@@ -124,6 +124,12 @@ class EditorialWriter:
             try:
                 parsed = json.loads(json_str)
                 if isinstance(parsed, dict) and "content" in parsed:
+                    content = str(parsed["content"])
+                    # Remove any JSON wrapper artifacts or trailing JSON keys
+                    content = re.sub(r'^(?:\{|")?\s*(?:title|content|post_type|referrals|image_url)":.*?\n', '', content, flags=re.IGNORECASE)
+                    content = re.sub(r'"\s*,\s*"(?:post_type|referral_links_used|image_url)".*$', '', content, flags=re.DOTALL | re.IGNORECASE)
+                    content = content.strip('"{}\n\r ')
+                    parsed["content"] = content
                     return parsed
             except Exception:
                 pass
@@ -269,16 +275,18 @@ class EditorialWriter:
                 }
                 hashtag = category_hashtags.get(category, "#Инсайд" if "Twitter" in source else "#Разбор")
                 
-                # Programmatically guarantee hyperlinked source in 1 word/phrase if missing
-                if source_url and f"[{source}]" not in content and source_url not in content:
+                # Ensure source is hyperlinked ONCE if missing from LLM content
+                if source_url and source and "](" not in content:
                     hyperlink = f"[{source}]({source_url})"
-                    if content.startswith("📌") or content.startswith("#"):
-                        lines = content.split("\n\n")
-                        lines.insert(1, f"По материалам {hyperlink}:")
-                        content = "\n\n".join(lines)
+                    pattern = re.escape(source)
+                    if re.search(pattern, content, flags=re.IGNORECASE):
+                        content = re.sub(pattern, hyperlink, content, count=1, flags=re.IGNORECASE)
                     else:
-                        content = f"📌 {hashtag} **{title}**\n\nПо материалам {hyperlink}:\n\n{content}"
-                elif not content.startswith("📌") and not content.startswith("#"):
+                        content = f"По материалам {hyperlink}:\n\n{content}"
+
+                # Clean any duplicated leading hashtags or emojis from LLM
+                if not content.startswith("📌"):
+                    content = re.sub(r'^(?:📌|#\w+)*\s*', '', content).strip()
                     content = f"📌 {hashtag} **{title}**\n\n{content}"
 
                 # Remove any bottom duplicate source footer or bare URLs at the end of post
