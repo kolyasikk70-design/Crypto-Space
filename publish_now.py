@@ -44,22 +44,23 @@ async def generate_and_publish_real_news():
                     "summary": r[3]
                 })
 
-    # Prioritize Twitter Influencers & Whale Alerts first in queue
-    raw_all = twitter_items + rss_items + api_items + unprocessed_db
-    twitter_first = [item for item in raw_all if "twitter" in item.get("source_name", "").lower()]
-    other_items = [item for item in raw_all if "twitter" not in item.get("source_name", "").lower()]
-    all_items = twitter_first + other_items
-
-    selected_item = None
-    selected_category = "Twitter Influencer"
-
+    all_items = twitter_items + rss_items + api_items + unprocessed_db
+    scored_items = []
     verifier = FilterVerifier()
     for item in all_items:
         passed, confidence, category = verifier.evaluate_news(item)
         if passed:
-            selected_item = item
-            selected_category = category
-            break
+            scored_items.append((confidence, item, category))
+
+    # Sort descending by high-impact confidence score!
+    scored_items.sort(key=lambda x: x[0], reverse=True)
+
+    selected_item = None
+    selected_category = "General Crypto"
+
+    if scored_items:
+        best_score, selected_item, selected_category = scored_items[0]
+        print(f"🔥 TOP IMPACT ITEM SELECTED (Score: {best_score:.2f}) [{selected_category}]: {selected_item.get('title')[:80]}")
 
     if not selected_item and all_items:
         selected_item = all_items[0]

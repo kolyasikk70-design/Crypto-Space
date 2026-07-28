@@ -39,13 +39,18 @@ class FilterVerifier:
         if matches:
             confidence += 0.30
 
-        # Prioritize Twitter influencer posts
-        if "twitter" in news_item.get("source_name", "").lower():
-            confidence += 0.25
+        # High Impact Alpha Indicators
+        # 1. Big money / liquidations / hacks / treasury moves
+        if re.search(r'\$\d+(?:\.\d+)?\s*(?:million|billion|[mb])|\b\d+\s*(?:million|billion)\b|\b(?:liquidation|liquidated|hack|hacked|exploit|drained|minted|transferred|stole|stolen)\b', text, re.IGNORECASE):
+            confidence += 0.35
 
-        # Check title indicators (numbers, dollar amounts, official names)
-        if re.search(r'\$\d+|\d+\s*million|\d+\s*billion|\bsec\b|\betf\b|\bhack\b|\bexploit\b|\bairdrop\b', text):
-            confidence += 0.15
+        # 2. Key Web3 Figures & Whales (Vitalik, Saylor, ZachXBT, Lookonchain, PeckShield, WhaleAlert, CZ)
+        if re.search(r'\b(?:vitalik|saylor|cz|zachxbt|lookonchain|peckshield|whale_alert|hayes)\b', text, re.IGNORECASE):
+            confidence += 0.30
+
+        # 3. Macro & Regulation (SEC, ETF, FED, FOMC)
+        if re.search(r'\b(?:sec|etf|fed|fomc|treasury|approval|rejected)\b', text, re.IGNORECASE):
+            confidence += 0.25
 
         is_passed = confidence >= 0.85
 

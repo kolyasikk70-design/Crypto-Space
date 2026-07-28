@@ -164,11 +164,16 @@ class CryptoNewsroomEngine:
         api_events = await self.api_collector.fetch_all()
         twitter_tweets = await self.twitter_collector.fetch_all()
 
-        unprocessed = self.db.get_unprocessed_news(limit=25)
-        # Sort queue to process Twitter Influencer & Whale Alert items first
-        tw_items = [i for i in unprocessed if "twitter" in i.get("source_name", "").lower()]
-        other_items = [i for i in unprocessed if "twitter" not in i.get("source_name", "").lower()]
-        unprocessed = tw_items + other_items
+        # Score and sort all candidate items by high-impact confidence score!
+        scored_items = []
+        for item in unprocessed:
+            passed, confidence, category = self.filter_verifier.evaluate_news(item)
+            if passed:
+                scored_items.append((confidence, item, category))
+
+        scored_items.sort(key=lambda x: x[0], reverse=True)
+        unprocessed_sorted = [x[1] for x in scored_items] + [x for x in unprocessed if x not in [s[1] for s in scored_items]]
+        unprocessed = unprocessed_sorted
 
         print(f"📥 Received {len(rss_news)} RSS stories, {len(api_events)} API events, {len(twitter_tweets)} Twitter posts. {len(unprocessed)} unprocessed in DB.")
 
