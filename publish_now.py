@@ -45,8 +45,9 @@ async def generate_and_publish_real_news():
                 })
 
     # Prioritize Twitter Influencers & Whale Alerts first in queue
-    twitter_first = [item for item in all_items if "twitter" in item.get("source_name", "").lower()]
-    other_items = [item for item in all_items if "twitter" not in item.get("source_name", "").lower()]
+    raw_all = twitter_items + rss_items + api_items + unprocessed_db
+    twitter_first = [item for item in raw_all if "twitter" in item.get("source_name", "").lower()]
+    other_items = [item for item in raw_all if "twitter" not in item.get("source_name", "").lower()]
     all_items = twitter_first + other_items
 
     selected_item = None
