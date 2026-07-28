@@ -18,11 +18,23 @@ class TelegramPublisher:
         text = re.sub(r'`(.*?)`', r'\1', text)
         return text
 
+    def _clean_raw_json_junk(self, text: str) -> str:
+        """Safety net: purges any JSON metadata keys if raw JSON text reached Telegram publisher"""
+        if not text:
+            return ""
+        match = re.search(r'"content"\s*:\s*"([\s\S]*?)"\s*,\s*"(?:post_type|referral_links_used|image_url|title)"', text, re.IGNORECASE)
+        if match:
+            text = match.group(1).replace('\\"', '"').replace('\\n', '\n')
+        text = re.sub(r'^\s*\{\s*"title"\s*:\s*"[^"]*"\s*,\s*"content"\s*:\s*"', '', text, flags=re.IGNORECASE | re.DOTALL)
+        text = re.sub(r'"\s*,\s*"(?:post_type|referral_links_used|image_url)"[\s\S]*$', '', text, flags=re.IGNORECASE)
+        text = re.sub(r'"?\s*(?:post_type|referral_links_used|image_url)"\s*:\s*.*', '', text, flags=re.IGNORECASE)
+        return text.strip('"{}\n\r ')
+
     async def publish(self, title: str, content: str, parse_mode: str = "Markdown", image_url: Optional[str] = None) -> Optional[int]:
         """
         Publishes post to Telegram channel. Handles text, photo, caption length limits, and syntax fallbacks.
         """
-        full_text = content
+        full_text = self._clean_raw_json_junk(content)
 
         if self.dry_run:
             print("\n=================== [DRY RUN TELEGRAM PUBLISH] ===================")

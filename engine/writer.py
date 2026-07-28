@@ -127,6 +127,21 @@ class EditorialWriter:
             "image_url": news_item.get("image_url")
         }
 
+    def _sanitize_post_content(self, text: str) -> str:
+        """Purges any raw JSON metadata keys or wrapper syntax from post text"""
+        if not text:
+            return ""
+        # Regex extraction if raw JSON string was passed
+        match = re.search(r'"content"\s*:\s*"([\s\S]*?)"\s*,\s*"(?:post_type|referral_links_used|image_url|title)"', text, re.IGNORECASE)
+        if match:
+            text = match.group(1).replace('\\"', '"').replace('\\n', '\n')
+
+        text = re.sub(r'^\s*\{\s*"title"\s*:\s*"[^"]*"\s*,\s*"content"\s*:\s*"', '', text, flags=re.IGNORECASE | re.DOTALL)
+        text = re.sub(r'"\s*,\s*"(?:post_type|referral_links_used|image_url)"[\s\S]*$', '', text, flags=re.IGNORECASE)
+        text = re.sub(r'"?\s*(?:post_type|referral_links_used|image_url)"\s*:\s*.*', '', text, flags=re.IGNORECASE)
+        text = re.sub(r'^\s*\{\s*"title"\s*:\s*.*?\n', '', text, flags=re.IGNORECASE)
+        return text.strip('"{}\n\r ')
+
     def _clean_json(self, raw_text: str) -> dict:
         raw_text = re.sub(r'<think>.*?</think>', '', raw_text, flags=re.DOTALL).strip()
         
@@ -136,12 +151,8 @@ class EditorialWriter:
             try:
                 parsed = json.loads(json_str)
                 if isinstance(parsed, dict) and "content" in parsed:
-                    content = str(parsed["content"])
-                    # Remove any JSON wrapper artifacts or trailing JSON keys
-                    content = re.sub(r'^(?:\{|")?\s*(?:title|content|post_type|referrals|image_url)":.*?\n', '', content, flags=re.IGNORECASE)
-                    content = re.sub(r'"\s*,\s*"(?:post_type|referral_links_used|image_url)".*$', '', content, flags=re.DOTALL | re.IGNORECASE)
-                    content = content.strip('"{}\n\r ')
-                    parsed["content"] = content
+                    parsed["content"] = self._sanitize_post_content(str(parsed["content"]))
+                    parsed["title"] = self._clean_ru_title(str(parsed.get("title", "")))
                     return parsed
             except Exception:
                 pass
@@ -150,6 +161,7 @@ class EditorialWriter:
         if lines:
             title = lines[0].replace("#", "").replace("**", "").strip()
             content = "\n\n".join(lines)
+            content = self._sanitize_post_content(content)
             return {
                 "title": title,
                 "content": content,
