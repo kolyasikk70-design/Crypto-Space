@@ -86,6 +86,11 @@ class EditorialWriter:
         ru_title = self._clean_ru_title(title)
         ru_summary = self._translate_to_russian(summary) if summary else ru_title
 
+        # Clean robotic RSS boilerplate & trailing junk
+        ru_summary = re.sub(r'\s*–\s*(?:еженедельный обзор|Morning Crypto Report|обзор рынка).*', '', ru_summary, flags=re.IGNORECASE)
+        ru_summary = re.sub(r'\[…\]|\[\.\.\.\]|\.\.\.', '', ru_summary).strip()
+        ru_summary = re.sub(r'\s{2,}', ' ', ru_summary)
+
         is_twitter = "twitter" in source_name.lower()
         tag = "📌 #Инсайд" if is_twitter else "📌 #Аналитика"
         author_text = f"[{source_name}]({source_url})" if source_url else source_name
@@ -94,7 +99,7 @@ class EditorialWriter:
             f"{tag} **{ru_title}**\n\n"
             f"По материалам {author_text}:\n\n"
             f"{ru_summary}\n\n"
-            f"💡 Данное событие отражает фундаментальный сдвиг ликвидности и внимания ключевых участников рынка."
+            f"💡 Ключевые показатели указывают на перераспределение ликвидности между большими игроками."
         )
 
         full_content, refs = self._inject_referrals(full_content)
