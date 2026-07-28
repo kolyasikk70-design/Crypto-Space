@@ -19,18 +19,22 @@ class FilterVerifier:
         summary = news_item.get("summary", "")
         text = f"{title} {summary}".lower()
 
-        # Reject raw price dumps or ticker snapshots
-        if "рыночный импульс" in text or "coingecko" in text or "текущие реальные котировки" in text or "simple/price" in text:
-            return False, 0.0, "Filtered out: raw price ticker update"
+        # Mandatory Pure Crypto Relevance Check
+        core_crypto_regex = re.compile(
+            r'\b(?:bitcoin|btc|ethereum|eth|solana|sol|crypto|defi|whale|sec|etf|binance|bybit|okx|airdrop|token|altcoin|usdt|usdc|vitalik|saylor|cz|hack|exploit|on-chain|onchain|layer2|l2|arbitrum|optimism|base|monad|hyperliquid|peckshield|lookonchain|tether|ripple|xrp|fed|fomc|mvrv|liquidation|blockchain)\b',
+            re.IGNORECASE
+        )
+        if not core_crypto_regex.search(text):
+            return False, 0.0, "Filtered out: Not directly related to core crypto topics"
 
         # Check for spam or low value price prediction
         for spam_term in self.spam_keywords:
             if spam_term in text:
                 return False, 0.0, f"Filtered out: low-value topic ({spam_term})"
 
-        # Check high impact keyword match
+        # Base confidence calculation
         matches = self.high_impact_regex.findall(text)
-        confidence = 0.55  # Base confidence
+        confidence = 0.50  # Base confidence
 
         if matches:
             confidence += 0.30
