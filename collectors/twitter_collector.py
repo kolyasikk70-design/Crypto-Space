@@ -86,7 +86,50 @@ class TwitterCollector:
                                     "category": category
                                 })
         except Exception as e:
-            print(f"[TwitterCollector] Error fetching @{handle}: {e}")
+            print(f"[TwitterCollector] Syndication fallback for @{handle}: {e}")
+
+        # RSS Fallback via Google News Search for site:x.com/{handle}
+        if not new_items:
+            try:
+                rss_url = f"https://news.google.com/rss/search?q=site:x.com/{handle}&hl=en-US&gl=US&ceid=US:en"
+                resp = await client.get(rss_url, headers=self.headers, timeout=10.0)
+                if resp.status_code == 200:
+                    import feedparser
+                    feed = feedparser.parse(resp.text)
+                    for entry in feed.entries[:10]:
+                        title = getattr(entry, "title", "").strip()
+                        link = getattr(entry, "link", "").strip()
+                        if not title or not link:
+                            continue
+                        
+                        # Clean Google RSS title suffix " - x.com"
+                        clean_title = title.replace(" - x.com", "").replace(" - Twitter", "").strip()
+                        if "/ Posts / X" in clean_title or " / Posts" in clean_title or len(clean_title) < 15:
+                            continue
+                            
+                        source_title = f"Twitter (@{handle}): {clean_title[:80]}"
+                        
+                        if not self.db.is_news_seen(link, source_title):
+                            added = self.db.add_raw_news(
+                                source_name=f"Twitter (@{handle})",
+                                source_url=link,
+                                title=source_title,
+                                summary=f"Пост от {name} (@{handle}):\n\n{clean_title}",
+                                image_url=""
+                            )
+                            if added:
+                                new_items.append({
+                                    "source_name": f"Twitter (@{handle})",
+                                    "source_url": link,
+                                    "title": source_title,
+                                    "summary": clean_title,
+                                    "image_url": "",
+                                    "author": name,
+                                    "handle": handle,
+                                    "category": category
+                                })
+            except Exception as ex:
+                print(f"[TwitterCollector] RSS error @{handle}: {ex}")
 
         return new_items
 
