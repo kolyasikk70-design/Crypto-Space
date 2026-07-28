@@ -88,12 +88,13 @@ class EditorialWriter:
 
     def _clean_ru_title(self, raw_title: str) -> str:
         if not raw_title:
-            return ""
-        # Remove prefixed "Twitter (@handle): " or "Твиттер (@handle): "
-        cleaned = re.sub(r'^(?:Twitter|Твиттер)\s*(?:\([^)]+\))?:\s*', '', raw_title, flags=re.IGNORECASE).strip()
-        if not self._is_russian(cleaned):
-            cleaned = self._translate_to_russian(cleaned)
-        return cleaned.strip()
+            return "Анализ Крипторынка"
+        clean = re.sub(r'```(?:json)?', '', raw_title, flags=re.IGNORECASE)
+        clean = re.sub(r'^(?:Заголовок|Title|Тема):\s*', '', clean, flags=re.IGNORECASE)
+        clean = clean.replace('"', '').replace("'", '').strip()
+        if not self._is_russian(clean):
+            clean = self._translate_to_russian(clean)
+        return clean if clean else "Анализ Крипторынка"
 
     def _fallback_generate(self, news_item: Dict[str, Any], category: str) -> Dict[str, Any]:
         title = news_item.get("title", "")
