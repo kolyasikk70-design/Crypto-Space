@@ -11,10 +11,10 @@ class TelegramPublisher:
         self.dry_run = dry_run or not bool(bot_token and chat_id)
 
     def _strip_markdown(self, text: str) -> str:
-        """Removes basic Markdown formatting for plain text fallback"""
+        """Removes basic Markdown formatting for plain text fallback without appending URLs"""
         text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
         text = re.sub(r'\*(.*?)\*', r'\1', text)
-        text = re.sub(r'\[(.*?)\]\((.*?)\)', r'\1 (\2)', text)
+        text = re.sub(r'\[(.*?)\]\((.*?)\)', r'\1', text)  # Keep ONLY link text, NO URL in parentheses!
         text = re.sub(r'`(.*?)`', r'\1', text)
         return text
 
@@ -35,9 +35,8 @@ class TelegramPublisher:
             return 99999  # Mock Telegram message ID
 
         # Telegram Photo Caption Limit is 1024 characters.
-        # If text > 1020 chars and image_url is provided, fallback to text-only message (4096 char limit)
         if image_url and len(full_text) > 1020:
-            print("[TelegramPublisher] Content length > 1020 chars. Switching from sendPhoto to sendMessage to avoid Telegram caption error.")
+            print("[TelegramPublisher] Content length > 1020 chars. Switching from sendPhoto to sendMessage.")
             image_url = None
 
         endpoint = f"https://api.telegram.org/bot{self.bot_token}/sendPhoto" if image_url else f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
@@ -52,7 +51,7 @@ class TelegramPublisher:
             payload["caption"] = full_text
         else:
             payload["text"] = full_text
-            payload["disable_web_page_preview"] = False
+            payload["disable_web_page_preview"] = True  # STOPS giant web preview photos!
 
         try:
             async with httpx.AsyncClient(timeout=20.0) as client:
@@ -63,19 +62,19 @@ class TelegramPublisher:
                     print(f"[TelegramPublisher] Successfully published post #{msg_id} to Telegram!")
                     return msg_id
                 
-                # If image fails, retry as text message
+                # If image fails, retry as text message without web page preview
                 if image_url:
-                    print(f"[TelegramPublisher] Photo send failed ({response.status_code}). Retrying plain text message...")
+                    print(f"[TelegramPublisher] Photo send failed ({response.status_code}). Retrying text message...")
                     return await self.publish(title=title, content=content, parse_mode=parse_mode, image_url=None)
 
                 # If Markdown parsing failed, retry plain text without parse_mode
                 if response.status_code == 400 and "parse" in response.text.lower():
-                    print("[TelegramPublisher] Markdown parsing error in Telegram API. Retrying without parse_mode...")
+                    print("[TelegramPublisher] Markdown parsing error. Retrying plain text without URLs...")
                     plain_text = self._strip_markdown(full_text)
                     retry_payload = {
                         "chat_id": self.chat_id,
                         "text": plain_text,
-                        "disable_web_page_preview": False
+                        "disable_web_page_preview": True  # STOPS giant web preview photos!
                     }
                     retry_resp = await client.post(f"https://api.telegram.org/bot{self.bot_token}/sendMessage", json=retry_payload)
                     if retry_resp.status_code == 200:
