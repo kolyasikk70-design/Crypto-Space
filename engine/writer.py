@@ -62,7 +62,19 @@ class EditorialWriter:
                 return translated.strip()
         except Exception:
             pass
-        return text
+    def _deduplicate_paragraphs(self, text: str) -> str:
+        """Strips duplicate paragraphs from LLM output"""
+        paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+        seen = set()
+        unique = []
+        for p in paragraphs:
+            clean_p = re.sub(r'#[^\s]+', '', p)
+            norm = re.sub(r'[^\w]', '', clean_p.lower())
+            key = norm[:35]
+            if key and key not in seen:
+                seen.add(key)
+                unique.append(p)
+        return "\n\n".join(unique)
 
     def _inject_referrals(self, content: str) -> Tuple[str, List[str]]:
         used_links = []
@@ -288,6 +300,8 @@ class EditorialWriter:
                 if not content.startswith("📌"):
                     content = re.sub(r'^(?:📌|#\w+)*\s*', '', content).strip()
                     content = f"📌 {hashtag} **{title}**\n\n{content}"
+
+                content = self._deduplicate_paragraphs(content)
 
                 # Remove any bottom duplicate source footer or bare URLs at the end of post
                 content = re.sub(r'\n+(?:Источник|Ссылка|Source|Link):\s*\[.*?\]\(.*?\)\s*$', '', content, flags=re.IGNORECASE)
